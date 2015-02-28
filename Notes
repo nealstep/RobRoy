@@ -1,0 +1,60 @@
+Orangutan Hookups:
+
+	Middle Btn: (B)
+	       PC3 (PC2,5 other buttons)
+
+	LEDS: (D)
+	        PD1 (red)
+		PC4 (green)
+
+	LCD: (L)
+		PB0-2
+		PC2-5
+
+	Motor: (M)
+		PC6-7
+		PD6-7
+		
+		Timer2
+
+	TWI: (T)
+		PC0-1
+
+	Scheduler: (C)
+		Timer3
+
+	Serial: (S) - connection to PI
+		PD2-3
+		PB3 (interrupt)
+
+	Sensor: (E)
+		PA3 
+		Timer0
+
+	Servos: (O) - not yet used
+		PA6-7,PD5 
+		Timer1
+
+	Buzzer: (Z)
+		PD4
+
+	GPS: (G)
+		PD0-1
+
+
+Orangutan Pin Map:
+
+PA 01234567 PB 01234567 PC 01234567 PD 01234567
+      E  OO    LLLS*XXX    TTLLLLMM    GGSSZOMM
+                             BBDB       D
+* only for output
+X in use
+
+Orangutan Timer Use:
+
+Timer 0123               
+      EOMC 
+
+PI Hookups:
+   RX & TX & BCM017 to TX & RX & PB3 through Level Shifter
+
