@@ -1,5 +1,5 @@
 TARGET = main
-SRCS = main.c sched.c compass.c twimaster.c sdmio.c motor.c
+SRCS = main.c sched.c compass.c twimaster/twimaster.c sdmio.c motor.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
