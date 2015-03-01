@@ -1,5 +1,6 @@
 TARGET = main
-SRCS = main.c sched.c compass.c twimaster/twimaster.c sdmio.c motor.c
+SRCS = main.c lcd.c serial.c schedule.c compass.c twimaster/twimaster.c sdmio.c
+# motor.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
@@ -26,32 +27,30 @@ LDFLAGS = -Wl,-gc-sections -Wl,-u,vfprintf -lprintf_min $(LIBS) -Wl,-relax
 all: $(TARGET).hex
 
 install: $(TARGET).hex
-        $(AVRDUDE) -p $(AVRDUDE_DEVICE) -c avrisp2 -P $(PORT) -U flash:w:$(TARGET).hex
-
-# $(CC) $(CFLAGS) $(INCLUDES) -o $(MAIN) $(OBJS) $(LFLAGS) $(LIBS)
+	$(AVRDUDE) -p $(AVRDUDE_DEVICE) -c avrisp2 -P $(PORT) -U flash:w:$(TARGET).hex
 
 $(TARGET).hex: $(TARGET).obj
-        $(OBJ2HEX) -R .eeprom -O ihex $< $@
+	$(OBJ2HEX) -R .eeprom -O ihex $< $@
 
 $(TARGET).obj: $(OBJS) $(DEPS)
-        $(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $@
 
 %.d: %.c
-        $(CC) -MM $(CFLAGS) $< -o $@
+	$(CC) -MM $(CFLAGS) $< -o $@
 
 -include $(DEPS)
 
 .c.o:
-        $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 check-syntax:
-        $(CC) $(CFLAGS) -o /dev/null -S ${CHK_SOURCES}
+	$(CC) $(CFLAGS) -o /dev/null -S ${CHK_SOURCES}
 
 depend: $(SRCS)
 
 clean:
-        $(RM) $(OBJS) $(TARGET).hex $(TARGET).obj *~
+	$(RM) $(OBJS) $(TARGET).hex $(TARGET).obj *~
 
 distclean:
-        $(RM) $(OBJS) $(DEPS) $(TARGET).hex $(TARGET).obj *~
+	$(RM) $(OBJS) $(DEPS) $(TARGET).hex $(TARGET).obj *~
 
