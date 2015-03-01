@@ -38,7 +38,7 @@ Orangutan Hookups:
 	Buzzer: (Z)
 		PD4
 
-	GPS: (G)
+	GPS: (G) - not yet usedsy
 		PD0-1
 
 

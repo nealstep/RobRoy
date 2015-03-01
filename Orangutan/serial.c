@@ -14,11 +14,19 @@ void serialSetup(void) {
   // use interupts to read serial
   serial_set_mode(UART1, SERIAL_AUTOMATIC);
   serial_send_blocking(UART1, LF, strlen(LF));
+  // setup interrupt pin
+  DDRB |= SERIAL_INTERRUPT;
+  PORTB &= ~SERIAL_INTERRUPT;
 }
 
-void serialPrint(char *str) {
-  serial_send_blocking(UART1, str, strlen(str));
+void serialPrint(char *message) {
+  serial_send_blocking(UART1, message, strlen(message));
   serial_send_blocking(UART1, LF, strlen(LF));
+}
+
+void serialPrompt(uint8_t loops) {
+  sprintf(serialOutBuf, "%02X> ", loops);
+  serial_send_blocking(UART1, serialOutBuf, strlen(serialOutBuf));
 }
 
 uint8_t serialRead(void) {
@@ -41,6 +49,7 @@ uint8_t serialRead(void) {
   return FALSE;
 }
 
+// toggle serial interupt line
 void serialInterrupt(void) {
-  return;
+  PORTB ^= SERIAL_INTERRUPT;
 }

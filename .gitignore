@@ -4,9 +4,16 @@ Orangutan/twimaster
 # ignore Private file
 Private
 
+# ignore emacs files
+*~
+\#*\#
+.\#*.c
+
 # ignore c files
 *.d
 *.o
+
+# ignore avr files
 *.hex
 
 # Byte-compiled / optimized / DLL files

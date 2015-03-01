@@ -1,5 +1,7 @@
 #include "main.h"
 
+// data
+
 uint8_t schedCount;
 
 struct Data {
@@ -11,6 +13,8 @@ struct Data {
   int heading;
   uint8_t distance[SDMIO_NUM_PINS];
 } data;
+
+// code
 
 void dataSetup(void) {
   uint8_t i;
@@ -34,24 +38,22 @@ void dataReady(uint8_t ready) {
 
 // mark data collected
 void dataDone(uint8_t done) {
-  data.ready -= done;
+  data.ready &= ~done;
 }
 
 // schedule events
 void schedule(void) {
   schedCount++;
 /*
-  if (((schedCount & 0b110) == 0) && (schedCount & 0b1)) {
+  if (((schedCount & 0b00000110) == 0) && (schedCount & 0b1)) {
     // ~32hz
-    checkSync();
     motorGetCounts();
-  } else if ((#schedCount & 0b11111) == 0)  {
+  } else if ((#schedCount & 0b00011111) == 0)  {
     // ~4hz
     if (schedCount & 0b100000) {
       ping(0);
     } else {
       getCompass();
-      checkCourse();
     }
   }
 */
@@ -75,16 +77,13 @@ void setup(void) {
   // enable interrupts
   sei();
 
-  // print out started
-  lcdPrint(0, 0, "Started");
-  lcdPrint(1, 0, " ");
-  serialPrint("Started");
-  sprintf("%3u > ", serialOutBuf, 0);
-  serialPrint(serialOutBuf);
+  // print out start messages
+  lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_RUNNING);
+  serialPrint(MSG_STARTED);
+  serialPrompt(0);
 }
 
 void cmdDo(void) {
-  uint8_t i;
   char c = cmdBuf[0];
   uint8_t err = FALSE;
 
@@ -94,35 +93,43 @@ void cmdDo(void) {
       sprintf(serialOutBuf, "R %u", data.ready);
       break;
     case 'C':
+      sprintf(lcdOutBuf, "C%4d:%4d", data.countLeft, data.countRight);
+      lcdPrint(LCD_COUNTS_ROW, LCD_COUNTS_COL, lcdOutBuf);
       sprintf(serialOutBuf, "C %d %d", data.countLeft, data.countRight);
-      dataDone(COUNTS);
+      dataDone(READY_COUNTS);
       break;
     case 'M':
+      sprintf(lcdOutBuf, "M%4d:%4d", data.motorLeft, data.motorRight);
+      lcdPrint(LCD_MOTOR_ROW, LCD_MOTOR_COL, lcdOutBuf);
       sprintf(serialOutBuf, "M %d %d", data.motorLeft, data.motorRight);
-      dataDone(MOTORS);
+      dataDone(READY_MOTORS);
       break;
     case 'H':
       sprintf(serialOutBuf, "H %d", data.heading);
-      dataDone(HEADING);
+      dataDone(READY_HEADING);
       break;
     case 'D':
-      for (i=0;i<SDMIO_NUM_PINS;i++) {
-	sprintf(serialOutBuf, "D %u", data.distance[i]);
-      }
-      dataDone(DISTANCES);
+      sprintf(serialOutBuf, "D %u", data.distance[0]);
+      dataDone(READY_DISTANCES);
       break;
     // action commands
     case 'm':
       // parse numbers and set motors
+      sprintf(serialOutBuf, "Motored");
       break;
     case 'h':
       compassGet();
       data.heading = heading;
-      dataReady(HEADING);
+      sprintf(lcdOutBuf, "H%3u", data.heading);
+      lcdPrint(LCD_HEADING_ROW, LCD_HEADING_COL, lcdOutBuf);
+      sprintf(serialOutBuf, "Compassed");
+      dataReady(READY_HEADING);
       break;
     case 'd':
       // add getting pin to ping
       if (sdmioPing(0)) {
+	sprintf(serialOutBuf, "Pinged");
+      } else {
 	sprintf(serialOutBuf, "! [%s]", cmdBuf);
 	err = TRUE;
       }
@@ -132,7 +139,9 @@ void cmdDo(void) {
       err = TRUE;
   }
   if (err) {
-    lcdPrint(1, 0, "!");
+    lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_ERROR);
+  } else {
+    lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_RUNNING);
   }
   serialPrint(serialOutBuf);
 }
@@ -143,24 +152,29 @@ int main(void) {
   setup();
 
   while (TRUE) {
-    sprintf("%3u", lcdOutBuf, loops);
-    lcdPrint(1, 1, lcdOutBuf);
+    sprintf(lcdOutBuf, "%02X", loops);
+    lcdPrint(LCD_COUNT_ROW, LCD_COUNT_COL, lcdOutBuf);
+
     // check for commands
     if (serialRead()) {
       cmdDo();
-      sprintf("%3u > ", serialOutBuf, loops);
-      serialPrint(serialOutBuf);
+      serialPrompt(loops);
     }
     delay_ms(LOOP_DELAY);
+
     // check for ping results
     if (pinged) {
       if (!pinging) {
-	sprintf(lcdOutBuf, "D %3u", ticks[id]);
-	lcdPrint(1, 11, lcdOutBuf);
+	if (id == 0) {
+	  sprintf(lcdOutBuf, "D%3u", ticks[id]);
+	  lcdPrint(LCD_DISTANCE_0_ROW, LCD_DISTANCE_0_COL, lcdOutBuf);
+	}
 	data.distance[id] = ticks[id];
-	dataReady(DISTANCES);
+	dataReady(READY_DISTANCES);
+	pinged = FALSE;
       }
     }
+
     loops++;
   }
   return FALSE;

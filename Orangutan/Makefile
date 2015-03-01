@@ -1,6 +1,5 @@
 TARGET = main
-SRCS = main.c lcd.c serial.c schedule.c compass.c twimaster/twimaster.c sdmio.c
-# motor.c
+SRCS = main.c lcd.c serial.c schedule.c compass.c twimaster/twimaster.c sdmio.c motor.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(SRCS:.c=.d)
 
@@ -19,8 +18,10 @@ INCLUDES = -I/usr/lib/avr/include/
 LIBS = -lpololu_$(DEVICE)
 
 # basic flags
-CFLAGS = -std=c99 -Wall -g -mcall-prologues -mmcu=$(MCU) $(DEVICE_SPECIFIC_CFLAGS) -Os $(INCLUDES)
-LDFLAGS = -Wl,-gc-sections -Wl,-u,vfprintf -lprintf_min $(LIBS) -Wl,-relax
+MCU_FLAGS = -mmcu=$(MCU) $(DEVICE_SPECIFIC_CFLAGS) 
+CFLAGS = -std=c99 -Wall -g -mcall-prologues $(MCU_FLAGS) -Os $(INCLUDES)
+MIN_PRINTF= -Wl,-u,vfprintf -lprintf_min
+LDFLAGS = -Wl,-gc-sections $(LIBS) -Wl,-relax
 
 .PHONY: depend clean
 
