@@ -14,18 +14,21 @@ struct Data {
   uint8_t distance[SDMIO_NUM_PINS];
 } data;
 
+int speed[MOTOR_COUNT];
+uint8_t sensor;
+
 // code
 
 void dataSetup(void) {
   uint8_t i;
 
-  data.ready = 0;
-  data.countLeft = 0;
-  data.countRight = 0;
-  data.motorLeft = 0;
-  data.motorRight = 0;
+  data.ready = READY_INIT;
+  data.countLeft = MOTOR_COUNT_INIT;
+  data.countRight = MOTOR_COUNT_INIT;
+  data.motorLeft = MOTOR_INIT;
+  data.motorRight = MOTOR_INIT;
   data.heading = COMPASS_BAD;
-  for (i=0;i<SDMIO_NUM_PINS;i++) {
+  for (i=ZERO;i<SDMIO_NUM_PINS;i++) {
     data.distance[i] = SDMIO_BAD;
   }
 }
@@ -44,7 +47,7 @@ void dataDone(uint8_t done) {
 // schedule events
 void schedule(void) {
   schedCount++;
-/*
+/* need to put binary values into constants
   if (((schedCount & 0b00000110) == 0) && (schedCount & 0b1)) {
     // ~32hz
     motorGetCounts();
@@ -73,6 +76,7 @@ void setup(void) {
   scheduleSetup(schedule);
   compassSetup();
   sdmioSetup();
+  motorSetup();
 
   // enable interrupts
   sei();
@@ -80,65 +84,84 @@ void setup(void) {
   // print out start messages
   lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_RUNNING);
   serialPrint(MSG_STARTED);
-  serialPrompt(0);
 }
 
 void cmdDo(void) {
-  char c = cmdBuf[0];
+  uint8_t v, i;
+  char c = cmdBuf[FUNCTION_POS];
   uint8_t err = FALSE;
 
   switch (c) {
     // data printout commands
     case 'R':
-      sprintf(serialOutBuf, "R %u", data.ready);
+      sprintf(serialOutBuf, SERIAL_R_SPR, data.ready);
       break;
     case 'C':
-      sprintf(lcdOutBuf, "C%4d:%4d", data.countLeft, data.countRight);
+      sprintf(lcdOutBuf, LCD_COUNT_SPR, data.countLeft, data.countRight);
       lcdPrint(LCD_COUNTS_ROW, LCD_COUNTS_COL, lcdOutBuf);
-      sprintf(serialOutBuf, "C %d %d", data.countLeft, data.countRight);
+      sprintf(serialOutBuf, SERIAL_COUNT_SPR, data.countLeft, data.countRight);
       dataDone(READY_COUNTS);
       break;
     case 'M':
-      sprintf(lcdOutBuf, "M%4d:%4d", data.motorLeft, data.motorRight);
+      sprintf(lcdOutBuf, LCD_MOTOR_SPR, data.motorLeft, data.motorRight);
       lcdPrint(LCD_MOTOR_ROW, LCD_MOTOR_COL, lcdOutBuf);
-      sprintf(serialOutBuf, "M %d %d", data.motorLeft, data.motorRight);
+      sprintf(serialOutBuf, SERIAL_MOTOR_SPR, data.motorLeft, data.motorRight);
       dataDone(READY_MOTORS);
       break;
     case 'H':
-      sprintf(serialOutBuf, "H %d", data.heading);
+      sprintf(serialOutBuf, SERIAL_HEADING_SPR, data.heading);
       dataDone(READY_HEADING);
       break;
     case 'D':
-      sprintf(serialOutBuf, "D %u", data.distance[0]);
+      for (i=ZERO;i<SDMIO_NUM_PINS;i++) {
+	sprintf(serialOutBuf, SERIAL_DISTANCE_SPR, i, data.distance[i]);
+      }
       dataDone(READY_DISTANCES);
       break;
     // action commands
     case 'm':
-      // parse numbers and set motors
-      sprintf(serialOutBuf, "Motored");
+      v = sscanf(&cmdBuf[ARGS_POS], SCANF_MOTOR, 
+		 &speed[MOTOR_LEFT], &speed[MOTOR_RIGHT]);
+      if (v == CMD_m_ARGS) {
+	for (i=0;i<MOTOR_COUNT;i++) {
+	  if (speed[i] < -UINT8_T_MAX) {
+	    speed[i] = -UINT8_T_MAX;
+	  } else if (speed[i] > UINT8_T_MAX) {
+	    speed[i] = UINT8_T_MAX;
+	  }
+	}
+	motorSetSpeeds(speed[MOTOR_LEFT], speed[MOTOR_RIGHT]);
+	data.motorLeft = motorLeft;
+	data.motorRight = motorRight;
+	dataReady(READY_MOTORS);
+	sprintf(serialOutBuf, MSG_MOTORED);
+      } else {
+	err = TRUE;
+      }
       break;
     case 'h':
       compassGet();
       data.heading = heading;
-      sprintf(lcdOutBuf, "H%3u", data.heading);
-      lcdPrint(LCD_HEADING_ROW, LCD_HEADING_COL, lcdOutBuf);
-      sprintf(serialOutBuf, "Compassed");
       dataReady(READY_HEADING);
+      sprintf(lcdOutBuf, LCD_HEADING_SPR, data.heading);
+      lcdPrint(LCD_HEADING_ROW, LCD_HEADING_COL, lcdOutBuf);
+      sprintf(serialOutBuf, MSG_COMPASSED);
       break;
     case 'd':
-      // add getting pin to ping
-      if (sdmioPing(0)) {
-	sprintf(serialOutBuf, "Pinged");
-      } else {
-	sprintf(serialOutBuf, "! [%s]", cmdBuf);
-	err = TRUE;
+      v = sscanf(&cmdBuf[1], SCANF_DISTANCE, &sensor);
+      if (v == CMD_d_ARGS) {
+	if (sensor < SDMIO_NUM_PINS) {
+	  if (sdmioPing(sensor)) {
+	    sprintf(serialOutBuf, MSG_PINGED);
+	    break;
+	  }
+	}
       }
-      break;
     default:
-      sprintf(serialOutBuf, "! [%s]", cmdBuf);
       err = TRUE;
   }
   if (err) {
+    sprintf(serialOutBuf, SERIAL_ERROR_SPR, cmdBuf);
     lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_ERROR);
   } else {
     lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_RUNNING);
@@ -147,13 +170,17 @@ void cmdDo(void) {
 }
 
 int main(void) {
-  uint8_t loops = 0;
+  uint8_t subLoops = ZERO;
+  uint8_t loops = ZERO;
 
   setup();
 
+  // print out counter
+  serialPrompt(loops);
+  sprintf(lcdOutBuf, LCD_LOOP_SPR, loops);
+  lcdPrint(LCD_COUNT_ROW, LCD_COUNT_COL, lcdOutBuf);
+
   while (TRUE) {
-    sprintf(lcdOutBuf, "%02X", loops);
-    lcdPrint(LCD_COUNT_ROW, LCD_COUNT_COL, lcdOutBuf);
 
     // check for commands
     if (serialRead()) {
@@ -165,17 +192,24 @@ int main(void) {
     // check for ping results
     if (pinged) {
       if (!pinging) {
-	if (id == 0) {
-	  sprintf(lcdOutBuf, "D%3u", ticks[id]);
-	  lcdPrint(LCD_DISTANCE_0_ROW, LCD_DISTANCE_0_COL, lcdOutBuf);
-	}
 	data.distance[id] = ticks[id];
 	dataReady(READY_DISTANCES);
+	if (id == SDMIO_MAIN) {
+	  sprintf(lcdOutBuf, LCD_DISTANCE_SPR, data.distance[id]);
+	  lcdPrint(LCD_DISTANCE_0_ROW, LCD_DISTANCE_0_COL, lcdOutBuf);
+	}
 	pinged = FALSE;
       }
     }
 
-    loops++;
+    // manage lop counter
+    subLoops++;
+    if (subLoops == SUB_LOOP_MAX) {
+      subLoops = ZERO;
+      loops++;
+      sprintf(lcdOutBuf, LCD_LOOP_SPR, loops);
+      lcdPrint(LCD_COUNT_ROW, LCD_COUNT_COL, lcdOutBuf);
+    }
   }
   return FALSE;
 }

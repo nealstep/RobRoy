@@ -7,9 +7,9 @@ char cmdBuf[SERIAL_BUFFER_SIZE];
 uint8_t cmdPos;
 
 void serialSetup(void) {
-  serialPos = 0;
-  cmdPos = 0;
-  serial_set_baud_rate(UART1, BAUD);
+  serialPos = ZERO;
+  cmdPos = ZERO;
+  serial_set_baud_rate(UART1, SERIAL_BAUD);
   serial_receive_ring(UART1, serialInBuf, SERIAL_BUFFER_SIZE);
   // use interupts to read serial
   serial_set_mode(UART1, SERIAL_AUTOMATIC);
@@ -25,7 +25,7 @@ void serialPrint(char *message) {
 }
 
 void serialPrompt(uint8_t loops) {
-  sprintf(serialOutBuf, "%02X> ", loops);
+  sprintf(serialOutBuf, SERIAL_PROMPT_SPR, loops);
   serial_send_blocking(UART1, serialOutBuf, strlen(serialOutBuf));
 }
 
@@ -40,8 +40,8 @@ uint8_t serialRead(void) {
     cmdBuf[cmdPos] = c;
     // if we hit new line finish command
     if (c == '\n') {
-      cmdBuf[cmdPos] = 0;
-      cmdPos = 0;
+      cmdBuf[cmdPos] = STRING_TERMINATOR;
+      cmdPos = ZERO;
       return TRUE;
     }
     cmdPos++;

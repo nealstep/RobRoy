@@ -28,7 +28,7 @@ ISR(PCINT0_vect) {
 void sdmioSetup(void) {
   uint8_t i;
 
-  id = 0;
+  id = ZERO;
   pinging = FALSE;
   pinged = FALSE;
   // setup US pins
@@ -39,10 +39,10 @@ void sdmioSetup(void) {
   }
 
   // setup timer 0
-  TCCR0A = 0;
+  TCCR0A = SDMIO_TIMER_CONTROL_INIT;
   TCCR0B = _BV(CS02) | _BV(CS00); // div 1024 prescaler
   TIMSK0 = _BV(TOIE0); // overflow interrupt
-  TCNT0 = 0;
+  TCNT0 = ZERO;
 
   // enable interrupt vector 0 and listen for pcint1
   PCICR |= _BV(PCIE0);
@@ -55,7 +55,7 @@ uint8_t sdmioPing(uint8_t pinId) {
   }
   id = pinId;
   // clear counters
-  ticks[id] = 0;
+  ticks[id] = ZERO;
   // set pin to output and bring to high and wait
   DDRA |= pins[id];
   PORTA |= pins[id];

@@ -20,5 +20,5 @@ void compassGet(void) {
   high = i2c_readAck();
   low = i2c_readAck();
   // round to the nearest degree
-  heading = ((high << 8) + low + 5) / 10;
+  heading = ((high << BYTE_LENGTH) + low + ROUND_SUM) / ROUND_DIVIDE;
 }
