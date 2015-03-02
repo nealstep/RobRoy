@@ -10,9 +10,11 @@
 
 // serial constants
 #define SERIAL_BUFFER_SIZE 32
-#define BAUD 57600
+#define SERIAL_BAUD 57600
 #define LF "\n"
+#define STRING_TERMINATOR 0
 #define SERIAL_INTERRUPT _BV(PB3)
+#define SERIAL_PROMPT_SPR "%02X> "
 
 //variables
 extern char serialOutBuf[SERIAL_BUFFER_SIZE];

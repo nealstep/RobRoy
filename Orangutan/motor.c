@@ -5,7 +5,7 @@ int motorLeft, motorRight;
 
 
 void motorSetup(void) {
-  motorSetSpeeds(0, 0);
+  motorSetSpeeds(MOTOR_INIT, MOTOR_INIT);
 }
 
 void motorGetCounts(void) {
@@ -14,10 +14,12 @@ void motorGetCounts(void) {
 }
 
 void motorSetSpeeds(int speedLeft, int speedRight) {
-  set_m1_speed(speedLeft);
-  set_m2_speed(speedRight);
+  motorLeft = speedLeft;
+  motorRight = speedRight;
+  set_m1_speed(motorLeft);
+  set_m2_speed(motorRight);
   svp_get_counts_and_reset_ab();
   svp_get_counts_and_reset_cd();
-  countLeft = 0;
-  countRight = 0;
+  countLeft = MOTOR_COUNT_INIT;
+  countRight = MOTOR_COUNT_INIT;
 }

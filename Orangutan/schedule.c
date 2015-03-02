@@ -12,8 +12,8 @@ void scheduleSetup(void (*f)(void)) {
 
   // setup timer ~256hz
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    TCNT3H = 0x0;
-    TCNT3L = 0x0;
+    TCNT3H = SCHEDULE_256HZ_H;
+    TCNT3L = SCHEDULE_256HZ_L;
   }
   TCCR3B = _BV(CS00);
   TIMSK3 = _BV(TOIE3);

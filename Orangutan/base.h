@@ -12,6 +12,8 @@
 #define FALSE 0
 #define TRUE 1
 #define SPACE ' '
+#define ZERO 0
+#define UINT8_T_MAX 255
 
 // robot library
 #include <pololu/orangutan.h>
