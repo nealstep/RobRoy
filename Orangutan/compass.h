@@ -15,9 +15,6 @@
 #define COMPASS_CMD 'A'
 #define COMPASS_DELAY 6 // process time in ms
 #define COMPASS_BAD -1
-#define BYTE_LENGTH 8
-#define ROUND_SUM 5
-#define ROUND_DIVIDE 10
 
 // variables
 extern int heading;

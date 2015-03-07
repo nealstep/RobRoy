@@ -91,6 +91,10 @@ void cmdDo(void) {
   char c = cmdBuf[FUNCTION_POS];
   uint8_t err = FALSE;
 
+  if (!c) {
+    return;
+  }
+
   switch (c) {
     // data printout commands
     case 'R':
@@ -113,6 +117,7 @@ void cmdDo(void) {
       dataDone(READY_HEADING);
       break;
     case 'D':
+      // !!!!!! this case of multiple lines does not work
       for (i=ZERO;i<SDMIO_NUM_PINS;i++) {
 	sprintf(serialOutBuf, SERIAL_DISTANCE_SPR, i, data.distance[i]);
       }

@@ -11,10 +11,20 @@
 // serial constants
 #define SERIAL_BUFFER_SIZE 32
 #define SERIAL_BAUD 57600
-#define LF "\n"
-#define STRING_TERMINATOR 0
 #define SERIAL_INTERRUPT _BV(PB3)
 #define SERIAL_PROMPT_SPR "%02X> "
+
+// serial sprintf
+#define SERIAL_R_SPR "R %u"
+#define SERIAL_COUNT_SPR "C %d %d"
+#define SERIAL_MOTOR_SPR "M %d %d"
+#define SERIAL_HEADING_SPR "H %d"
+#define SERIAL_DISTANCE_SPR "D%1u %u"
+#define SERIAL_ERROR_SPR "! [%s]"
+
+// serial input scanf
+#define SCANF_MOTOR "%d %d"
+#define SCANF_DISTANCE "%hhu"
 
 //variables
 extern char serialOutBuf[SERIAL_BUFFER_SIZE];

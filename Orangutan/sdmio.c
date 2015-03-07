@@ -67,7 +67,7 @@ uint8_t sdmioPing(uint8_t pinId) {
   // set for input and wait for interrupt on pin
   DDRA &= ~ pins[id];
   // reset timer
-  TCNT0 = 0;
+  TCNT0 = ZERO;
   // indicate we have pinged and awaiting a response (pinging)
   pinging = TRUE;
   pinged = TRUE;

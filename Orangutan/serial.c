@@ -37,6 +37,10 @@ uint8_t serialRead(void) {
   pos = serial_get_received_bytes(UART1);
   while (serialPos != pos) {
     c = serialInBuf[serialPos++];
+    // loop when we reach end of buffer
+    if (serialPos == SERIAL_BUFFER_SIZE) {
+      serialPos = 0;
+    }
     cmdBuf[cmdPos] = c;
     // if we hit new line finish command
     if (c == '\n') {

@@ -19,6 +19,17 @@
 #define LCD_DISTANCE_0_ROW 1
 #define LCD_DISTANCE_0_COL 12
 
+// function characters
+#define LCD_RUNNING "$"
+#define LCD_ERROR "!"
+
+// lcd sprintf
+#define LCD_COUNT_SPR "C%4d:%4d"
+#define LCD_MOTOR_SPR "M%4d:%4d"
+#define LCD_DISTANCE_SPR "D%3u"
+#define LCD_HEADING_SPR "H%3u"
+#define LCD_LOOP_SPR "%02X"
+
 // variables
 extern char lcdOutBuf[LCD_LINE_SIZE];
 
