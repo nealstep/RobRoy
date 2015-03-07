@@ -86,6 +86,22 @@ void setup(void) {
   serialPrint(MSG_STARTED);
 }
 
+void getCountF(void) {
+  motorGetCounts();
+  dataReady(READY_COUNTS);
+  sprintf(lcdOutBuf, LCD_COUNT_SPR, data.countLeft, data.countRight);
+  lcdPrint(LCD_COUNTS_ROW, LCD_COUNTS_COL, lcdOutBuf);
+}
+
+void getCompassF(void) {
+  compassGet();
+  data.heading = heading;
+  dataReady(READY_HEADING);
+  sprintf(lcdOutBuf, LCD_HEADING_SPR, data.heading);
+  lcdPrint(LCD_HEADING_ROW, LCD_HEADING_COL, lcdOutBuf);
+  sprintf(serialOutBuf, MSG_COMPASSED);
+}
+
 void cmdDo(void) {
   uint8_t v, i;
   char c = cmdBuf[FUNCTION_POS];
@@ -101,14 +117,10 @@ void cmdDo(void) {
       sprintf(serialOutBuf, SERIAL_R_SPR, data.ready);
       break;
     case 'C':
-      sprintf(lcdOutBuf, LCD_COUNT_SPR, data.countLeft, data.countRight);
-      lcdPrint(LCD_COUNTS_ROW, LCD_COUNTS_COL, lcdOutBuf);
       sprintf(serialOutBuf, SERIAL_COUNT_SPR, data.countLeft, data.countRight);
       dataDone(READY_COUNTS);
       break;
     case 'M':
-      sprintf(lcdOutBuf, LCD_MOTOR_SPR, data.motorLeft, data.motorRight);
-      lcdPrint(LCD_MOTOR_ROW, LCD_MOTOR_COL, lcdOutBuf);
       sprintf(serialOutBuf, SERIAL_MOTOR_SPR, data.motorLeft, data.motorRight);
       dataDone(READY_MOTORS);
       break;
@@ -124,6 +136,9 @@ void cmdDo(void) {
       dataDone(READY_DISTANCES);
       break;
     // action commands
+    case 'c':
+      getCountF();
+      break;
     case 'm':
       v = sscanf(&cmdBuf[ARGS_POS], SCANF_MOTOR, 
 		 &speed[MOTOR_LEFT], &speed[MOTOR_RIGHT]);
@@ -139,18 +154,14 @@ void cmdDo(void) {
 	data.motorLeft = motorLeft;
 	data.motorRight = motorRight;
 	dataReady(READY_MOTORS);
-	sprintf(serialOutBuf, MSG_MOTORED);
+	sprintf(lcdOutBuf, LCD_MOTOR_SPR, data.motorLeft, data.motorRight);
+	lcdPrint(LCD_MOTOR_ROW, LCD_MOTOR_COL, lcdOutBuf);
       } else {
 	err = TRUE;
       }
       break;
     case 'h':
-      compassGet();
-      data.heading = heading;
-      dataReady(READY_HEADING);
-      sprintf(lcdOutBuf, LCD_HEADING_SPR, data.heading);
-      lcdPrint(LCD_HEADING_ROW, LCD_HEADING_COL, lcdOutBuf);
-      sprintf(serialOutBuf, MSG_COMPASSED);
+      getCompassF();
       break;
     case 'd':
       v = sscanf(&cmdBuf[1], SCANF_DISTANCE, &sensor);
@@ -177,8 +188,11 @@ void cmdDo(void) {
 int main(void) {
   uint8_t subLoops = ZERO;
   uint8_t loops = ZERO;
+  unsigned char button;
 
   setup();
+  // setup buttons
+  button = get_single_debounced_button_press(ANY_BUTTON);
 
   // print out counter
   serialPrompt(loops);
@@ -205,6 +219,18 @@ int main(void) {
 	}
 	pinged = FALSE;
       }
+    }
+
+    // check buttons
+    button = get_single_debounced_button_press(ANY_BUTTON);
+    if (button & TOP_BUTTON)  {
+      getCountF();
+    }
+    if (button & MIDDLE_BUTTON) {
+      getCompassF();
+    }
+    if (button & BOTTOM_BUTTON) {
+      sdmioPing(ZERO);
     }
 
     // manage lop counter
