@@ -88,6 +88,8 @@ void setup(void) {
 
 void getCountF(void) {
   motorGetCounts();
+  data.countLeft = countLeft;
+  data.countRight = countRight;
   dataReady(READY_COUNTS);
   sprintf(lcdOutBuf, LCD_COUNT_SPR, data.countLeft, data.countRight);
   lcdPrint(LCD_COUNTS_ROW, LCD_COUNTS_COL, lcdOutBuf);
@@ -99,7 +101,6 @@ void getCompassF(void) {
   dataReady(READY_HEADING);
   sprintf(lcdOutBuf, LCD_HEADING_SPR, data.heading);
   lcdPrint(LCD_HEADING_ROW, LCD_HEADING_COL, lcdOutBuf);
-  sprintf(serialOutBuf, MSG_COMPASSED);
 }
 
 void cmdDo(void) {
@@ -115,23 +116,27 @@ void cmdDo(void) {
     // data printout commands
     case 'R':
       sprintf(serialOutBuf, SERIAL_R_SPR, data.ready);
+      serialPrint(serialOutBuf);
       break;
     case 'C':
       sprintf(serialOutBuf, SERIAL_COUNT_SPR, data.countLeft, data.countRight);
+      serialPrint(serialOutBuf);
       dataDone(READY_COUNTS);
       break;
     case 'M':
       sprintf(serialOutBuf, SERIAL_MOTOR_SPR, data.motorLeft, data.motorRight);
+      serialPrint(serialOutBuf);
       dataDone(READY_MOTORS);
       break;
     case 'H':
       sprintf(serialOutBuf, SERIAL_HEADING_SPR, data.heading);
+      serialPrint(serialOutBuf);
       dataDone(READY_HEADING);
       break;
     case 'D':
-      // !!!!!! this case of multiple lines does not work
       for (i=ZERO;i<SDMIO_NUM_PINS;i++) {
 	sprintf(serialOutBuf, SERIAL_DISTANCE_SPR, i, data.distance[i]);
+	serialPrint(serialOutBuf);
       }
       dataDone(READY_DISTANCES);
       break;
@@ -169,6 +174,7 @@ void cmdDo(void) {
 	if (sensor < SDMIO_NUM_PINS) {
 	  if (sdmioPing(sensor)) {
 	    sprintf(serialOutBuf, MSG_PINGED);
+	    serialPrint(serialOutBuf);
 	    break;
 	  }
 	}
@@ -182,7 +188,6 @@ void cmdDo(void) {
   } else {
     lcdPrint(LCD_STATUS_ROW, LCD_STATUS_COL, LCD_RUNNING);
   }
-  serialPrint(serialOutBuf);
 }
 
 int main(void) {
